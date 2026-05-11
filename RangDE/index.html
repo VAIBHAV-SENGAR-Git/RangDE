@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RangDE - Premium Color Palette Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f5f7fa;
+            --text-color: #1c1c1e;
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --border-color: rgba(0, 0, 0, 0.08);
+            --accent: #007AFF;
+            --toast-bg: rgba(0, 0, 0, 0.85);
+            --toast-color: white;
+            --shadow: 0 10px 30px rgba(0,0,0,0.05);
+            --font-main: 'Inter', sans-serif;
+            --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #0a0a0c;
+            --text-color: #f5f5f7;
+            --card-bg: rgba(28, 28, 30, 0.6);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --toast-bg: rgba(255, 255, 255, 0.9);
+            --toast-color: black;
+            --shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: var(--font-main);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: var(--transition);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Ambient Background */
+        .ambient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.5;
+            animation: float 15s infinite ease-in-out alternate;
+        }
+
+        .blob-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: rgba(0, 122, 255, 0.15); }
+        .blob-2 { bottom: -10%; right: -10%; width: 40vw; height: 40vw; background: rgba(255, 59, 48, 0.1); }
+        [data-theme="dark"] .blob-1 { background: rgba(0, 122, 255, 0.2); }
+        [data-theme="dark"] .blob-2 { background: rgba(142, 67, 231, 0.15); }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(50px, 80px) scale(1.1); }
+        }
+
+        /* Header */
+        header {
+            width: 100%;
+            max-width: 1200px;
+            padding: 2rem 2rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .logo span {
+            color: var(--accent);
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        select, button.icon-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 0.6rem 1.2rem;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transition: var(--transition);
+            outline: none;
+            appearance: none;
+            box-shadow: var(--shadow);
+        }
+
+        button.icon-btn {
+            padding: 0;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        select:hover, button.icon-btn:hover {
+            transform: scale(1.05);
+            background: rgba(150,150,150,0.15);
+        }
+
+        /* Main Content */
+        main {
+            flex: 1;
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 2rem 2rem;
+            z-index: 10;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2.5rem;
+            justify-content: center;
+        }
+
+        /* Palette Container */
+        .palette {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            height: 55vh;
+            min-height: 400px;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            border-radius: 32px;
+        }
+
+        .color-card {
+            flex: 1;
+            border-radius: 28px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 1.5rem;
+            position: relative;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        .color-card:hover {
+            flex: 1.2;
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            z-index: 5;
+        }
+
+        .color-info {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 1.2rem;
+            border-radius: 20px;
+            text-align: center;
+            transition: var(--transition);
+            border: 1px solid rgba(255,255,255,0.2);
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .color-card:hover .color-info {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .color-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Card Controls */
+        .card-controls {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            opacity: 0;
+            transform: translateX(10px);
+            transition: var(--transition);
+        }
+
+        .color-card:hover .card-controls, .color-card.locked .card-controls {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .card-btn {
+            background: rgba(255,255,255,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: var(--transition);
+            color: inherit;
+        }
+
+        .card-btn:hover {
+            background: rgba(255,255,255,0.6);
+            transform: scale(1.1);
+        }
+
+        .card-btn.active {
+            background: rgba(0,0,0,0.8);
+            color: white;
+            border: none;
+        }
+
+        /* Adjust Popup */
+        .adjust-popup {
+            position: absolute;
+            top: 65px;
+            right: 1.5rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 1.2rem;
+            border-radius: 20px;
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            display: none;
+            flex-direction: column;
+            gap: 1rem;
+            width: 160px;
+            z-index: 100;
+            color: var(--text-color);
+            box-shadow: var(--shadow);
+            transform-origin: top right;
+        }
+
+        .adjust-popup.show {
+            display: flex;
+            animation: popupIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes popupIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        .slider-group label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        /* Action Area */
+        .actions {
+            display: flex;
+            gap: 1.2rem;
+            margin-bottom: 3.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: var(--text-color);
+            color: var(--bg-color);
+            border: none;
+            padding: 1.2rem 3rem;
+            border-radius: 30px;
+            font-size: 1.15rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        [data-theme="dark"] .btn-primary {
+            box-shadow: 0 10px 25px rgba(255,255,255,0.1);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.95);
+        }
+
+        .btn-secondary {
+            background: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 1.2rem 2rem;
+            border-radius: 30px;
+            font-size: 1.05rem;
+            font-weight: 500;
+            cursor: pointer;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            box-shadow: var(--shadow);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(150,150,150,0.1);
+            transform: translateY(-3px);
+        }
+
+        /* Tools & Export Section */
+        .tools-section {
+            width: 100%;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 32px;
+            padding: 2.5rem;
+            margin-bottom: 4rem;
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            display: none;
+            box-shadow: var(--shadow);
+        }
+
+        .tools-section.show {
+            display: block;
+            animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2.5rem;
+        }
+
+        .tool-card {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        .tool-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .gradient-preview {
+            width: 100%;
+            height: 120px;
+            border-radius: 20px;
+            background: linear-gradient(to right, #ff0000, #0000ff);
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+        }
+        
+        .code-snippet {
+            background: rgba(0,0,0,0.04);
+            padding: 1.2rem;
+            border-radius: 16px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            word-break: break-all;
+            position: relative;
+            border: 1px solid var(--border-color);
+        }
+
+        [data-theme="dark"] .code-snippet {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .copy-code-btn {
+            position: absolute;
+            top: 0.8rem;
+            right: 0.8rem;
+            background: var(--text-color);
+            color: var(--bg-color);
+            border: none;
+            border-radius: 10px;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .copy-code-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* Contrast Checker */
+        .contrast-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+        }
+
+        .contrast-item {
+            padding: 1.2rem;
+            border-radius: 16px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            align-items: center;
+            background: rgba(255,255,255,0.3);
+        }
+        [data-theme="dark"] .contrast-item { background: rgba(0,0,0,0.2); }
+
+        .contrast-ratio {
+            font-size: 1.6rem;
+            font-weight: 700;
+        }
+
+        .contrast-badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .badge-good { background: #34C759; }
+        .badge-bad { background: #FF3B30; }
+
+        /* Saved Palettes */
+        .saved-section {
+            width: 100%;
+            margin-bottom: 4rem;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .saved-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.8rem;
+        }
+
+        .saved-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 1.2rem;
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            transition: var(--transition);
+            box-shadow: var(--shadow);
+            cursor: pointer;
+        }
+
+        .saved-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+
+        .saved-colors {
+            display: flex;
+            height: 80px;
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 1.2rem;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+        }
+
+        .saved-color {
+            flex: 1;
+        }
+
+        .saved-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .saved-actions span {
+            font-size: 0.85rem;
+            color: #888;
+            font-weight: 500;
+        }
+
+        .delete-btn {
+            background: rgba(255, 59, 48, 0.1);
+            color: #FF3B30;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .delete-btn:hover {
+            background: #FF3B30;
+            color: white;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%) translateY(150px);
+            background: var(--toast-bg);
+            color: var(--toast-color);
+            padding: 1.2rem 2.5rem;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 1.1rem;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+            transition: var(--transition);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Animations */
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Footer */
+        .footer {
+            width: 100%;
+            text-align: center;
+            padding: 2rem 1rem;
+            margin-top: auto;
+            color: var(--text-color);
+            opacity: 0.6;
+            font-size: 0.9rem;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .palette {
+                flex-direction: column;
+                height: auto;
+            }
+            .color-card {
+                height: 140px;
+                padding: 1.2rem;
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+            .color-card:hover {
+                transform: scale(1.02);
+                z-index: 1;
+            }
+            .color-info {
+                opacity: 1;
+                transform: translateY(0);
+                text-align: left;
+                padding: 0.8rem 1.2rem;
+            }
+            .card-controls {
+                position: relative;
+                top: auto;
+                right: auto;
+                flex-direction: row;
+                opacity: 1;
+                transform: none;
+            }
+            .adjust-popup {
+                top: auto;
+                bottom: 60px;
+                right: 0;
+                transform-origin: bottom right;
+            }
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+            .btn-primary {
+                width: 100%;
+                justify-content: center;
+            }
+            .actions {
+                width: 100%;
+            }
+            .btn-secondary {
+                flex: 1;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-bg">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <header>
+        <div class="logo">Rang<span>DE</span></div>
+        <div class="controls">
+            <select id="formatSelect">
+                <option value="hex">HEX</option>
+                <option value="rgb">RGB</option>
+                <option value="hsl">HSL</option>
+            </select>
+            <button class="icon-btn" id="themeToggle" title="Toggle Theme">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <div class="toolbar">
+            <select id="moodSelect">
+                <option value="random">Mood: Random</option>
+                <option value="warm">Mood: Warm</option>
+                <option value="cool">Mood: Cool</option>
+                <option value="pastel">Mood: Pastel</option>
+                <option value="dark">Mood: Dark</option>
+            </select>
+            <select id="countSelect">
+                <option value="4">4 Colors</option>
+                <option value="5" selected>5 Colors</option>
+                <option value="6">6 Colors</option>
+            </select>
+        </div>
+
+        <div class="palette" id="paletteContainer">
+            <!-- Color cards generated here -->
+        </div>
+
+        <div class="actions">
+            <button class="btn-primary" id="generateBtn">
+                <i class="fas fa-sync-alt"></i> Generate Palette
+            </button>
+            <button class="btn-secondary" id="saveBtn">
+                <i class="far fa-bookmark"></i> Save
+            </button>
+            <button class="btn-secondary" id="toolsBtn">
+                <i class="fas fa-magic"></i> Tools
+            </button>
+        </div>
+
+        <div class="tools-section" id="toolsSection">
+            <div class="tools-grid">
+                <!-- Gradient -->
+                <div class="tool-card">
+                    <div class="tool-title"><i class="fas fa-fill-drip"></i> Gradient Preview</div>
+                    <div class="gradient-preview" id="gradientPreview"></div>
+                    <div class="code-snippet">
+                        <span id="gradientCode">background: linear-gradient(...);</span>
+                        <button class="copy-code-btn" id="copyGradientBtn" title="Copy CSS"><i class="fas fa-copy"></i></button>
+                    </div>
+                </div>
+                
+                <!-- Contrast -->
+                <div class="tool-card">
+                    <div class="tool-title"><i class="fas fa-adjust"></i> Contrast Checker</div>
+                    <p style="font-size:0.85rem; color:gray; margin-bottom: 0.5rem;">Ratio between adjacent colors</p>
+                    <div class="contrast-grid" id="contrastGrid">
+                        <!-- Contrast items -->
+                    </div>
+                </div>
+
+                <!-- Export -->
+                <div class="tool-card" style="grid-column: 1 / -1;">
+                    <div class="tool-title"><i class="fas fa-file-export"></i> Export Palette</div>
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
+                        <button class="btn-secondary" id="exportImageBtn"><i class="fas fa-image"></i> Export Image</button>
+                        <button class="btn-secondary" id="exportCssBtn"><i class="fab fa-css3-alt"></i> Copy CSS Vars</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="saved-section" id="savedSection" style="display: none;">
+            <div class="section-title">Saved Palettes</div>
+            <div class="saved-grid" id="savedGrid">
+                <!-- Saved cards -->
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        Made by Sengar Production &copy; <span id="year"></span>. All rights reserved.
+    </footer>
+
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMsg">Color Copied!</span>
+    </div>
+
+    <canvas id="exportCanvas" style="display:none;"></canvas>
+
+    <script>
+        // DOM Elements
+        const paletteContainer = document.getElementById('paletteContainer');
+        const generateBtn = document.getElementById('generateBtn');
+        const formatSelect = document.getElementById('formatSelect');
+        const moodSelect = document.getElementById('moodSelect');
+        const countSelect = document.getElementById('countSelect');
+        const themeToggle = document.getElementById('themeToggle');
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+        const toolsBtn = document.getElementById('toolsBtn');
+        const toolsSection = document.getElementById('toolsSection');
+        const gradientPreview = document.getElementById('gradientPreview');
+        const gradientCode = document.getElementById('gradientCode');
+        const copyGradientBtn = document.getElementById('copyGradientBtn');
+        const contrastGrid = document.getElementById('contrastGrid');
+        const saveBtn = document.getElementById('saveBtn');
+        const savedSection = document.getElementById('savedSection');
+        const savedGrid = document.getElementById('savedGrid');
+        const exportImageBtn = document.getElementById('exportImageBtn');
+        const exportCssBtn = document.getElementById('exportCssBtn');
+        const exportCanvas = document.getElementById('exportCanvas');
+
+        // State
+        let colors = []; // Array of objects { hex: '#...', locked: false }
+        let format = 'hex';
+        let savedPalettes = JSON.parse(localStorage.getItem('rangde_palettes')) || [];
+
+        // Utilities
+        const random = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+        // Color Conversions
+        function hslToHex(h, s, l) {
+            l /= 100;
+            const a = s * Math.min(l, 1 - l) / 100;
+            const f = n => {
+                const k = (n + h / 30) % 12;
+                const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+                return Math.round(255 * color).toString(16).padStart(2, '0');
+            };
+            return `#${f(0)}${f(8)}${f(4)}`.toUpperCase();
+        }
+
+        function hexToRgb(hex) {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return `RGB(${r}, ${g}, ${b})`;
+        }
+
+        function hexToHsl(hex) {
+            let r = parseInt(hex.slice(1, 3), 16) / 255;
+            let g = parseInt(hex.slice(3, 5), 16) / 255;
+            let b = parseInt(hex.slice(5, 7), 16) / 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+            if (max === min) { h = s = 0; } 
+            else {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            }
+            return `HSL(${Math.round(h * 360)}, ${Math.round(s * 100)}%, ${Math.round(l * 100)}%)`;
+        }
+
+        // Return just H, S, L values for the slider
+        function getHslValues(hex) {
+            let r = parseInt(hex.slice(1, 3), 16) / 255;
+            let g = parseInt(hex.slice(3, 5), 16) / 255;
+            let b = parseInt(hex.slice(5, 7), 16) / 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+            if (max !== min) {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            } else {
+                h = s = 0;
+            }
+            return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
+        }
+
+        function formatColor(hex) {
+            if (format === 'rgb') return hexToRgb(hex);
+            if (format === 'hsl') return hexToHsl(hex);
+            return hex;
+        }
+
+        // Contrast Check Logic
+        function getLuminance(hex) {
+            const rgb = parseInt(hex.slice(1), 16);
+            const r = (rgb >> 16) & 0xff;
+            const g = (rgb >>  8) & 0xff;
+            const b = (rgb >>  0) & 0xff;
+            const a = [r, g, b].map(function (v) {
+                v /= 255;
+                return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+            });
+            return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
+        }
+
+        function getContrastRatio(hex1, hex2) {
+            const l1 = getLuminance(hex1);
+            const l2 = getLuminance(hex2);
+            const ratio = l1 > l2 ? ((l1 + 0.05) / (l2 + 0.05)) : ((l2 + 0.05) / (l1 + 0.05));
+            return ratio.toFixed(2);
+        }
+
+        function getTextColor(hex) {
+            return getLuminance(hex) > 0.179 ? '#000000' : '#ffffff';
+        }
+
+        // Generate Colors Based on Mood
+        function generateRandomColor(mood) {
+            let h, s, l;
+            switch(mood) {
+                case 'warm': h = random(0, 60); s = random(60, 100); l = random(40, 60); break;
+                case 'cool': h = random(180, 260); s = random(50, 100); l = random(40, 70); break;
+                case 'pastel': h = random(0, 360); s = random(40, 70); l = random(75, 90); break;
+                case 'dark': h = random(0, 360); s = random(30, 80); l = random(15, 30); break;
+                default: h = random(0, 360); s = random(50, 100); l = random(30, 85); break;
+            }
+            return hslToHex(h, s, l);
+        }
+
+        // Initialize Palette
+        function initPalette() {
+            const count = parseInt(countSelect.value);
+            if (colors.length === 0) {
+                for (let i = 0; i < count; i++) {
+                    colors.push({ hex: generateRandomColor(moodSelect.value), locked: false });
+                }
+            } else if (colors.length < count) {
+                while(colors.length < count) {
+                    colors.push({ hex: generateRandomColor(moodSelect.value), locked: false });
+                }
+            } else if (colors.length > count) {
+                colors = colors.slice(0, count);
+            }
+            renderPalette();
+            updateTools();
+        }
+
+        function generatePalette() {
+            const count = parseInt(countSelect.value);
+            const mood = moodSelect.value;
+            for (let i = 0; i < count; i++) {
+                if (!colors[i].locked) {
+                    colors[i].hex = generateRandomColor(mood);
+                }
+            }
+            renderPalette();
+            updateTools();
+        }
+
+        function renderPalette() {
+            paletteContainer.innerHTML = '';
+            colors.forEach((col, index) => {
+                const textColor = getTextColor(col.hex);
+                const infoBg = textColor === '#ffffff' ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.3)';
+                const borderCol = textColor === '#ffffff' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)';
+
+                const card = document.createElement('div');
+                card.className = `color-card ${col.locked ? 'locked' : ''}`;
+                card.style.backgroundColor = col.hex;
+                card.style.color = textColor;
+
+                // Adjust popup values
+                const hsl = getHslValues(col.hex);
+
+                card.innerHTML = `
+                    <div class="card-controls" onclick="event.stopPropagation()">
+                        <button class="card-btn ${col.locked ? 'active' : ''}" title="Lock Color" onclick="toggleLock(${index}, event)">
+                            <i class="fas fa-${col.locked ? 'lock' : 'lock-open'}"></i>
+                        </button>
+                        <button class="card-btn" title="Adjust Color" onclick="toggleAdjust(${index}, event)">
+                            <i class="fas fa-sliders-h"></i>
+                        </button>
+                    </div>
+
+                    <div class="adjust-popup" id="adjust-${index}" onclick="event.stopPropagation()">
+                        <div class="slider-group">
+                            <label>Hue <span id="hue-val-${index}">${hsl.h}°</span></label>
+                            <input type="range" min="0" max="360" value="${hsl.h}" oninput="adjustColor(${index}, this.value, 'h')">
+                        </div>
+                        <div class="slider-group">
+                            <label>Lightness <span id="light-val-${index}">${hsl.l}%</span></label>
+                            <input type="range" min="0" max="100" value="${hsl.l}" oninput="adjustColor(${index}, this.value, 'l')">
+                        </div>
+                    </div>
+
+                    <div class="color-info" style="background: ${infoBg}; border-color: ${borderCol};" onclick="copyColor('${col.hex}')">
+                        <div class="color-value">${formatColor(col.hex)}</div>
+                        <div style="font-size: 0.8rem; opacity: 0.8; margin-top: 5px;">Click to copy</div>
+                    </div>
+                `;
+                paletteContainer.appendChild(card);
+            });
+        }
+
+        // Actions
+        window.toggleLock = function(index, event) {
+            colors[index].locked = !colors[index].locked;
+            renderPalette();
+        };
+
+        window.toggleAdjust = function(index, event) {
+            document.querySelectorAll('.adjust-popup').forEach((popup, i) => {
+                if (i !== index) popup.classList.remove('show');
+            });
+            const popup = document.getElementById(`adjust-${index}`);
+            popup.classList.toggle('show');
+        };
+
+        window.adjustColor = function(index, val, type) {
+            const hsl = getHslValues(colors[index].hex);
+            let newHex;
+            if (type === 'h') {
+                newHex = hslToHex(parseInt(val), hsl.s, hsl.l);
+                document.getElementById(`hue-val-${index}`).innerText = val + '°';
+            } else {
+                newHex = hslToHex(hsl.h, hsl.s, parseInt(val));
+                document.getElementById(`light-val-${index}`).innerText = val + '%';
+            }
+            colors[index].hex = newHex;
+            
+            // Fast update without full re-render
+            const card = paletteContainer.children[index];
+            card.style.backgroundColor = newHex;
+            const textColor = getTextColor(newHex);
+            card.style.color = textColor;
+            const info = card.querySelector('.color-info');
+            info.style.background = textColor === '#ffffff' ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.3)';
+            info.querySelector('.color-value').innerText = formatColor(newHex);
+            info.setAttribute('onclick', `copyColor('${newHex}')`);
+
+            updateTools(); // Update gradient and contrast
+        };
+
+        window.copyColor = function(hex) {
+            const value = formatColor(hex);
+            navigator.clipboard.writeText(value);
+            showToast(`Copied ${value}!`);
+            
+            // Close any open adjust popups
+            document.querySelectorAll('.adjust-popup').forEach(p => p.classList.remove('show'));
+        };
+
+        function showToast(msg) {
+            toastMsg.innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        // Tools Section
+        toolsBtn.addEventListener('click', () => {
+            toolsSection.classList.toggle('show');
+            if (toolsSection.classList.contains('show')) {
+                toolsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        });
+
+        function updateTools() {
+            if (!toolsSection.classList.contains('show') && savedPalettes.length === 0 && !document.getElementById('gradientPreview')) return;
+            
+            // Gradient
+            const hexes = colors.map(c => c.hex);
+            const gradientString = `linear-gradient(to right, ${hexes.join(', ')})`;
+            gradientPreview.style.background = gradientString;
+            gradientCode.innerText = `background: ${gradientString};`;
+
+            // Contrast
+            contrastGrid.innerHTML = '';
+            for (let i = 0; i < colors.length - 1; i++) {
+                const c1 = colors[i].hex;
+                const c2 = colors[i + 1].hex;
+                const ratio = getContrastRatio(c1, c2);
+                const isGood = ratio >= 4.5;
+                
+                const item = document.createElement('div');
+                item.className = 'contrast-item';
+                item.innerHTML = `
+                    <div style="display:flex; width:100%; border-radius:8px; overflow:hidden; height:8px; margin-bottom:5px;">
+                        <div style="flex:1; background:${c1}"></div>
+                        <div style="flex:1; background:${c2}"></div>
+                    </div>
+                    <div class="contrast-ratio">${ratio}</div>
+                    <div class="contrast-badge ${isGood ? 'badge-good' : 'badge-bad'}">${isGood ? 'Good' : 'Poor'}</div>
+                `;
+                contrastGrid.appendChild(item);
+            }
+        }
+
+        copyGradientBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(gradientCode.innerText);
+            showToast("Gradient CSS Copied!");
+        });
+
+        // Save & Load Palettes
+        saveBtn.addEventListener('click', () => {
+            const paletteHexes = colors.map(c => c.hex);
+            savedPalettes.unshift({
+                id: Date.now(),
+                colors: paletteHexes
+            });
+            localStorage.setItem('rangde_palettes', JSON.stringify(savedPalettes));
+            renderSavedPalettes();
+            showToast("Palette Saved!");
+        });
+
+        function renderSavedPalettes() {
+            if (savedPalettes.length === 0) {
+                savedSection.style.display = 'none';
+                return;
+            }
+            savedSection.style.display = 'block';
+            savedGrid.innerHTML = '';
+            
+            savedPalettes.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'saved-card';
+                card.onclick = (e) => {
+                    if (e.target.closest('.delete-btn')) return;
+                    loadPalette(p.colors);
+                };
+
+                const colorsHtml = p.colors.map(c => `<div class="saved-color" style="background: ${c}"></div>`).join('');
+                
+                card.innerHTML = `
+                    <div class="saved-colors">${colorsHtml}</div>
+                    <div class="saved-actions">
+                        <span>${p.colors.length} Colors</span>
+                        <button class="delete-btn" onclick="deletePalette(${p.id})"><i class="fas fa-trash"></i></button>
+                    </div>
+                `;
+                savedGrid.appendChild(card);
+            });
+        }
+
+        window.deletePalette = function(id) {
+            savedPalettes = savedPalettes.filter(p => p.id !== id);
+            localStorage.setItem('rangde_palettes', JSON.stringify(savedPalettes));
+            renderSavedPalettes();
+            showToast("Palette Deleted");
+        };
+
+        function loadPalette(hexes) {
+            countSelect.value = hexes.length;
+            colors = hexes.map(h => ({ hex: h, locked: false }));
+            renderPalette();
+            updateTools();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            showToast("Palette Loaded");
+        }
+
+        // Export Options
+        exportCssBtn.addEventListener('click', () => {
+            let css = ':root {\n';
+            colors.forEach((c, i) => {
+                css += `  --color-${i+1}: ${c.hex};\n`;
+            });
+            css += '}';
+            navigator.clipboard.writeText(css);
+            showToast("CSS Variables Copied!");
+        });
+
+        exportImageBtn.addEventListener('click', () => {
+            const ctx = exportCanvas.getContext('2d');
+            const width = 1200;
+            const height = 600;
+            exportCanvas.width = width;
+            exportCanvas.height = height;
+
+            // Background
+            ctx.fillStyle = isDarkMode ? '#0a0a0c' : '#f5f7fa';
+            ctx.fillRect(0, 0, width, height);
+
+            // Title
+            ctx.fillStyle = isDarkMode ? '#ffffff' : '#1c1c1e';
+            ctx.font = 'bold 40px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('RangDE Palette', width / 2, 80);
+
+            // Colors
+            const padding = 50;
+            const cardWidth = (width - (padding * 2) - ((colors.length - 1) * 20)) / colors.length;
+            
+            colors.forEach((c, i) => {
+                const x = padding + (i * (cardWidth + 20));
+                const y = 120;
+                const cardHeight = 350;
+
+                // Shadow
+                ctx.shadowColor = 'rgba(0,0,0,0.1)';
+                ctx.shadowBlur = 20;
+                ctx.shadowOffsetY = 10;
+
+                // Card Rect (Rounded corners simplified via paths)
+                ctx.fillStyle = c.hex;
+                ctx.beginPath();
+                ctx.roundRect(x, y, cardWidth, cardHeight, 20);
+                ctx.fill();
+
+                // Reset shadow for text
+                ctx.shadowColor = 'transparent';
+
+                // Text
+                ctx.fillStyle = getTextColor(c.hex);
+                ctx.font = 'bold 24px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(c.hex.toUpperCase(), x + cardWidth / 2, y + cardHeight - 40);
+            });
+
+            // Download
+            const link = document.createElement('a');
+            link.download = 'rangde-palette.png';
+            link.href = exportCanvas.toDataURL('image/png');
+            link.click();
+            showToast("Image Exported!");
+        });
+
+        // Theme Toggle
+        let isDarkMode = false;
+        themeToggle.addEventListener('click', () => {
+            isDarkMode = !isDarkMode;
+            document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+            themeToggle.innerHTML = isDarkMode ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+        });
+
+        // Event Listeners
+        generateBtn.addEventListener('click', generatePalette);
+        countSelect.addEventListener('change', initPalette);
+        formatSelect.addEventListener('change', (e) => {
+            format = e.target.value;
+            renderPalette();
+        });
+        moodSelect.addEventListener('change', generatePalette);
+
+        // Click outside to close adjust popups
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.color-card')) {
+                document.querySelectorAll('.adjust-popup').forEach(p => p.classList.remove('show'));
+            }
+        });
+
+        // Mobile Swipe to Generate (Simple implementation)
+        let touchstartX = 0;
+        let touchendX = 0;
+        
+        paletteContainer.addEventListener('touchstart', e => {
+            touchstartX = e.changedTouches[0].screenX;
+        });
+
+        paletteContainer.addEventListener('touchend', e => {
+            touchendX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            if (touchendX < touchstartX - 100) generatePalette(); // Swipe Left
+            if (touchendX > touchstartX + 100) generatePalette(); // Swipe Right
+        }
+
+        // Initialize
+        initPalette();
+        renderSavedPalettes();
+        document.getElementById('year').textContent = new Date().getFullYear();
+
+        // Keyboard Shortcut (Spacebar to generate)
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && e.target === document.body) {
+                e.preventDefault();
+                generatePalette();
+            }
+        });
+    </script>
+</body>
+</html>
+

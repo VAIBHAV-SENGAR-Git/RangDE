@@ -1,4 +1,4 @@
-# 🎨 RangDe - Color Palette Picker
+# 🎨 Color Palette Picker
 
 **RangDe** is a simple and interactive color palette picker built using **HTML, CSS, and JavaScript**. It helps users explore, generate, and select colors effortlessly, making it a useful tool for designers and developers.
 
